@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@config/*": ["config/*"],
+      "@src/*": ["src/*"],
+      "@utils/*": ["utils/*"]
+      // Add more mappings as needed
+    },
+    "module": "commonjs",
+    "target": "es6",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "server.js"],
+  "exclude": ["node_modules"]
+}
