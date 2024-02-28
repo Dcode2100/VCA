@@ -8,7 +8,7 @@ const mysql = require("mysql2");
 const app = express();
 
 // Use body-parser middleware
-app.use(bodyParser.json());
+app.use(bodyParser.json());   
 
 // Database connection setup
 const connection = mysql.createConnection({

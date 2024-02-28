@@ -1,10 +1,10 @@
 const mysql = require('mysql2');
 
 const connection = mysql.createConnection({
-  host: '34.82.42.68',     // Replace with your VM's IP address
+  host: '34.82.42.68',     
   user: 'root',
-  password: 'vcspassword',  // Replace with your MySQL root password
-  database: 'vcs',        // Replace with your desired database
+  password: 'vcspassword',  
+  database: 'vcs',        
   port: 3306
 });
 
