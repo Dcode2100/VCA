@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "start": "node src/server.js",
-    "back": "nodemon ts-node src/server.js",
+    "back": "nodemon src/server.js",
     "front": "cd frontend && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

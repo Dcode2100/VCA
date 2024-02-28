@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const dbConfig = require("../config/db");
-const mysql = require("mysql");
+const mysql = require("mysql2");
 // const authRoutes = require("./src/routes/authRoutes");
 
 // Create an Express app
