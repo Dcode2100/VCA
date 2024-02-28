@@ -1,10 +1,25 @@
-// server.js
+const { PrismaClient } = require("../prisma/src/generated/prisma-client");
+const app = require("./app"); // Import the app instance
 
-const app = require("./app");
+const prisma = new PrismaClient();
 
-// Start the server
-const port = process.env.PORT || 3000
-;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+async function createUser(username, email, password) {
+  const user = await prisma.user.create({
+    data: {
+      username,
+      email,
+      password,
+    },
+  });
+
+  console.log("User created:", user);
+}
+
+// Example usage
+createUser("john_doe", "john@example.com", "hashed_password");
+
+// Close Prisma client when the app shuts down
+process.on("SIGINT", async () => {
+  await prisma.$disconnect();
+  process.exit();
 });

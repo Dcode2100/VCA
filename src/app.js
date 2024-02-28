@@ -1,38 +1,17 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const dbConfig = require("../config/db");
-const mysql = require("mysql2");
-// const authRoutes = require("./src/routes/authRoutes");
 
-// Create an Express app
 const app = express();
+const port = 3000;
 
-// Use body-parser middleware
-app.use(bodyParser.json());   
+// Middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Database connection setup
-const connection = mysql.createConnection({
-  host: dbConfig.mysql.host,
-  user: dbConfig.mysql.user,
-  password: dbConfig.mysql.password,
-  database: dbConfig.mysql.database,
-  port: dbConfig.mysql.port,
+// Your application logic goes here
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
 
-connection.connect((err) => {
-  if (err) {
-    console.error("Error connecting to the database:", err);
-    return;
-  }
-  console.log("Connected to the database");
-});
-
-// Store the database connection for later use if needed
-app.set("db", connection);
-
-// Define routes
-// app.use("/auth", authRoutes);
-
-// ... (add more routes as your application grows)
-
-module.exports = app;
+module.exports = app; // Export the app instance for testing or other purposes
