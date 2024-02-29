@@ -1,25 +1,19 @@
-const { PrismaClient } = require("../prisma/src/generated/prisma-client");
-const app = require("./app"); // Import the app instance
+const express = require('express');
+const bodyParser = require('body-parser');
+const userRoutes = require('./routes/userRoutes');
 
-const prisma = new PrismaClient();
+const app = express();
+const port = 3000;
 
-async function createUser(username, email, password) {
-  const user = await prisma.user.create({
-    data: {
-      username,
-      email,
-      password,
-    },
-  });
+// Middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-  console.log("User created:", user);
-}
+// Routes
+app.use('/api', userRoutes); // Prefix all user routes with '/api'
 
-// Example usage
-createUser("john_doe", "john@example.com", "hashed_password");
-
-// Close Prisma client when the app shuts down
-process.on("SIGINT", async () => {
-  await prisma.$disconnect();
-  process.exit();
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
+
+module.exports = app;  // Export the app instance for testing or other purposes

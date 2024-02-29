@@ -115,7 +115,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/home/dikshant/dikshant/CODING/web dev/projects 2.0/NexSync/prisma/src/generated/prisma-client",
+      "value": "/workspaces/NexSync/prisma/src/generated/prisma-client",
       "fromEnvVar": null
     },
     "config": {
@@ -124,7 +124,7 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "debian-openssl-3.0.x",
+        "value": "debian-openssl-1.1.x",
         "native": true
       }
     ],
@@ -132,7 +132,7 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../../.env"
   },
   "relativePath": "../../..",
@@ -146,13 +146,13 @@ const config = {
   "inlineDatasources": {
     "db": {
       "url": {
-        "fromEnvVar": "mysql://root:vcspassword@34.82.42.68:3306/vcs",
+        "fromEnvVar": "DATABASE_URL",
         "value": null
       }
     }
   },
-  "inlineSchema": "// prisma/schema.prisma\n\ngenerator client {\n  output   = \"./src/generated/prisma-client\"\n  provider = \"prisma-client-js\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"mysql://root:vcspassword@34.82.42.68:3306/vcs\")\n}\n\nmodel User {\n  id       Int      @id @default(autoincrement())\n  username String   @unique\n  email    String   @unique\n  password String\n}",
-  "inlineSchemaHash": "5d229467f07ecd8c197f872b94e5ccce195b6c1ef7b228f7a8a325132b80bd25",
+  "inlineSchema": "// prisma/schema.prisma\n\ngenerator client {\n  output   = \"./src/generated/prisma-client\"\n  provider = \"prisma-client-js\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\") // Ensure double quotes around the variable name\n}\n\nmodel User {\n  id       Int      @id @default(autoincrement())\n  username String   @unique\n  email    String   @unique\n  password String\n}\n",
+  "inlineSchemaHash": "e82baf3cf93b8b1b763937d15d9052a9c254e71a93324267c908ec2fb68ef057",
   "copyEngine": true
 }
 
@@ -190,8 +190,8 @@ exports.PrismaClient = PrismaClient
 Object.assign(exports, Prisma)
 
 // file annotations for bundling tools to include these files
-path.join(__dirname, "libquery_engine-debian-openssl-3.0.x.so.node");
-path.join(process.cwd(), "prisma/src/generated/prisma-client/libquery_engine-debian-openssl-3.0.x.so.node")
+path.join(__dirname, "libquery_engine-debian-openssl-1.1.x.so.node");
+path.join(process.cwd(), "prisma/src/generated/prisma-client/libquery_engine-debian-openssl-1.1.x.so.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
 path.join(process.cwd(), "prisma/src/generated/prisma-client/schema.prisma")
