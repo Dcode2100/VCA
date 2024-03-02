@@ -1,9 +1,18 @@
-import { SparklesCore } from "@/components/sparkles/sparkles";
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
+import './App.css'
+import { Button } from './components/ui/button'
 
-export default function App() {
+function App() {
+  const [count, setCount] = useState(0)
+
   return (
-    <div className="h-[40rem] relative w-full bg-black flex flex-col items-center justify-center overflow-hidden rounded-md">
-      fasdf
-    </div>
-  );
+    <>
+      <Button >Button click me</Button>
+      <h1 className='text-5xl'>asdfalsdkjf</h1>
+    </>
+  )
 }
+
+export default App
