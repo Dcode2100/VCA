@@ -19,7 +19,7 @@ const WebSocketTest: React.FC = () => {
             peerConnection.current.addEventListener("iceconnectionstatechange", handleICEConnectionStateChange);
             peerConnection.current.addEventListener("track", handleTrack);
 
-            // Get user media and add to local video element
+            // Get user media and add to the local video element
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 if (localVideoRef.current) {
@@ -65,6 +65,8 @@ const WebSocketTest: React.FC = () => {
         socket.on("offer", async (data) => {
             const { offer } = data;
 
+            console.log("Received offer:", offer);
+
             // Set the remote description
             await peerConnection.current?.setRemoteDescription(new RTCSessionDescription(offer));
 
@@ -78,6 +80,8 @@ const WebSocketTest: React.FC = () => {
         socket.on("answer", async (data) => {
             const { answer } = data;
 
+            console.log("Received answer:", answer);
+
             // Set the remote description
             await peerConnection.current?.setRemoteDescription(new RTCSessionDescription(answer));
         });
@@ -85,6 +89,8 @@ const WebSocketTest: React.FC = () => {
         // Event listener for receiving ICE candidate from the other peer
         socket.on("ice-candidate", (data) => {
             const { candidate } = data;
+
+            console.log("Received ICE candidate:", candidate);
 
             // Add the ICE candidate to the peer connection
             peerConnection.current?.addIceCandidate(new RTCIceCandidate(candidate));
@@ -113,7 +119,7 @@ const WebSocketTest: React.FC = () => {
                 <h2>Remote Video</h2>
                 <video ref={remoteVideoRef} autoPlay playsInline />
             </div>
-        </div>
+        </div>  
     );
 };
 
