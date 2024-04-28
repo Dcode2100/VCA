@@ -9,16 +9,16 @@ const LobbyScreen = () => {
   const socket = useSocket();
   const navigate = useNavigate();
 
-const handleSubmitForm = useCallback(
-  (e) => {
-    e.preventDefault();
-    if (!isCreatingRoom && room.trim() !== "") {
-      // Emit a request to join the room
-      socket.emit("room:join:request", room.trim());
-    }
-  },
-  [isCreatingRoom, room, socket]
-);
+  const handleSubmitForm = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (!isCreatingRoom && room.trim() !== "") {
+        // Emit a request to join the room
+        socket.emit("room:join:request", room.trim());
+      }
+    },
+    [isCreatingRoom, room, socket]
+  );
 
   const handleRoomCreated = useCallback(
     ({ roomID }) => {
@@ -44,31 +44,26 @@ const handleSubmitForm = useCallback(
     }
   }, [isCreatingRoom, socket]);
 
-useEffect(() => {
-  // Listen for room:created event after room creation
-  socket.on("room:created", handleRoomCreated);
-  // Listen for room:join event after joining a room
-  socket.on("room:join", handleJoinRoom);
+  useEffect(() => {
+    // Listen for room:created event after room creation
+    socket.on("room:created", handleRoomCreated);
+    // Listen for room:join:response event after joining a room
+    socket.on("room:join:response", ({ exists, roomID }) => {
+      if (exists) {
+        // Room exists, navigate to the room
+        // navigate(`/room/${roomID}`);
+        navigate(`/room/${roomID}`, { state: { roomID } });
+      } else {
+        // Room does not exist, display an error message or handle it as needed
+        console.log("Room does not exist");
+      }
+    });
 
-  // Listen for response from the server when joining a room
-  socket.on("room:join:response", ({ exists, roomID }) => {
-    if (exists) {
-      // Room exists, navigate to the room
-      navigate(`/room/${roomID}`);
-    } else {
-      // Room does not exist, display an error message
-      console.log("Room does not exist");
-      // You can display an error message to the user here if needed
-    }
-  });
-
-  return () => {
-    socket.off("room:created", handleRoomCreated);
-    socket.off("room:join", handleJoinRoom);
-    socket.off("room:join:response");
-  };
-}, [socket, handleRoomCreated, handleJoinRoom, navigate]);
-
+    return () => {
+      socket.off("room:created", handleRoomCreated);
+      socket.off("room:join:response");
+    };
+  }, [socket, handleRoomCreated, navigate]);
 
   return (
     <div>
