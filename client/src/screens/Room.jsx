@@ -10,7 +10,6 @@ const RoomPage = () => {
   
   const { roomID } = location.state;
 
-
   const handleUserJoined = useCallback(({ id, participants }) => {
     console.log(`User ${id} joined room`);
     setUsersConnected(participants);
@@ -19,7 +18,6 @@ const RoomPage = () => {
 
     useEffect(() => {
       // Fetch all users in the room when the component mounts
-
       socket.emit("room:getAllUsers", { id: roomID });
 
       // Listen for response containing all users in the room
@@ -30,14 +28,12 @@ const RoomPage = () => {
         }
       });
 
-      // Subscribe to user:joined event
       socket.on("user:joined", handleUserJoined);
-
       return () => {
-        // Unsubscribe from user:joined event
         socket.off("user:joined", handleUserJoined);
+        socket.off("room:getAllUsers:response");
       };
-    }, [socket, handleUserJoined]);
+    }, [socket, roomID, handleUserJoined]);
 
   return (
     <div>

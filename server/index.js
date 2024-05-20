@@ -16,15 +16,21 @@ io.on("connection", (socket) => {
     roomCounter++;
     const roomID = roomCounter.toString();
     rooms.set(roomID, { participants: new Set([socket.id]) });
-    socket.emit("room:created", { roomID });
     socket.join(roomID);
+    socket.emit("room:created", { roomID });
     socket.emit("room:join:response", { exists: true, roomID, participants: Array.from(rooms.get(roomID).participants) });
+
     console.log(Array.from(rooms.get(roomID).participants))
     console.log(`room Created: ${roomID} , User: ${rooms}`);
+
+    io.to(roomID).emit("user:joined", { id: socket.id, participants: [socket.id] });
+
+
+    console.log(`users in room ${roomID}`, Array.from(rooms.get(roomID).participants));
   });
 
   socket.on("room:join:request", (roomID) => {
-    if (rooms.has(roomID)) {
+    if (rooms.has(roomID)) {  
       rooms.get(roomID).participants.add(socket.id);
       socket.join(roomID);
       socket.emit("room:join:response", { exists: true, roomID, participants: Array.from(rooms.get(roomID).participants) });
@@ -35,7 +41,9 @@ io.on("connection", (socket) => {
       
       console.log(`User ${socket.id} joined Room ${roomID}`);
     } else {
-      socket.emit("room:join:response", { exists: false });
+      socket.emit("room:join:response", { exists: true, roomID, participants: Array.from(rooms.get(roomID).participants) });
+
+   
     }
   });
 
