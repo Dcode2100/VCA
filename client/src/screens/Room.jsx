@@ -1,14 +1,14 @@
 import React, { useEffect, useCallback, useState } from "react";
 import { useSocket } from "../context/SocketProvider";
-import { useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 const RoomPage = () => {
   const socket = useSocket();
   const [usersConnected, setUsersConnected] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
-  const location = useLocation();
-  
-  const { roomID } = location.state;
+
+  const { roomID, participants } = useParams();
+  const participantsFromLobby = participants ? participants.split(",") : [];
 
   const handleUserJoined = useCallback(({ id, participants }) => {
     console.log(`User ${id} joined room`);
@@ -16,24 +16,20 @@ const RoomPage = () => {
     setAllUsers(participants);
   }, []);
 
-    useEffect(() => {
-      // Fetch all users in the room when the component mounts
-      socket.emit("room:getAllUsers", { id: roomID });
+  useEffect(() => {
+    console.log("participants from lobby", participantsFromLobby);
+    // Fetch all users in the room when the component mounts
 
-      // Listen for response containing all users in the room
-      socket.on("room:getAllUsers:response", ({ roomId, participants }) => {
-        if (roomId === roomID) {
-          setUsersConnected(participants);
-          console.log("Users in room:", participants);
-        }
-      });
+     socket.on("user:joined", handleUserJoined);
 
-      socket.on("user:joined", handleUserJoined);
-      return () => {
-        socket.off("user:joined", handleUserJoined);
-        socket.off("room:getAllUsers:response");
-      };
-    }, [socket, roomID, handleUserJoined]);
+    if (participantsFromLobby) {
+      setUsersConnected(participantsFromLobby);
+    }
+    return () => {
+      socket.off("user:joined", handleUserJoined);
+      socket.off("room:getAllUsers:response");
+    };
+  }, [socket, roomID, handleUserJoined]);
 
   return (
     <div>
