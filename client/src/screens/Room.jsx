@@ -6,7 +6,7 @@ const RoomPage = () => {
   const socket = useSocket();
   const [usersConnected, setUsersConnected] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
-
+  
   const { roomID, participants } = useParams();
   const participantsFromLobby = participants ? participants.split(",") : [];
 
@@ -16,20 +16,29 @@ const RoomPage = () => {
     setAllUsers(participants);
   }, []);
 
-  useEffect(() => {
-    console.log("participants from lobby", participantsFromLobby);
-    // Fetch all users in the room when the component mounts
+    useEffect(() => {
+      console.log("participants from lobby", participantsFromLobby);
+      // Fetch all users in the room when the component mounts
+      socket.emit("room:getAllUsers", { id: roomID });
 
-     socket.on("user:joined", handleUserJoined);
+      // Listen for response containing all users in the room
+      socket.on("room:getAllUsers:response", ({ roomId, participants }) => {
+        if (roomId === roomID) {
+          setUsersConnected(participants);
+          console.log("Users in room:", participants);
+        }
+      });
 
-    if (participantsFromLobby) {
-      setUsersConnected(participantsFromLobby);
-    }
-    return () => {
-      socket.off("user:joined", handleUserJoined);
-      socket.off("room:getAllUsers:response");
-    };
-  }, [socket, roomID, handleUserJoined]);
+      socket.on("user:joined", handleUserJoined);
+
+      if (participantsFromLobby) {
+        setUsersConnected(participantsFromLobby);
+      }
+      return () => {
+        socket.off("user:joined", handleUserJoined);
+        socket.off("room:getAllUsers:response");
+      };
+    }, [socket, roomID, handleUserJoined]);
 
   return (
     <div>
