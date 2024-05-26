@@ -48,11 +48,13 @@ const LobbyScreen = () => {
     // Listen for room:created event after room creation
     socket.on("room:created", handleRoomCreated);
     // Listen for room:join:response event after joining a room
-    socket.on("room:join:response", ({ exists, roomID }) => {
+    socket.on("room:join:response", ({ exists, roomID, participants }) => {
       if (exists) {
         // Room exists, navigate to the room
         // navigate(`/room/${roomID}`);
-        navigate(`/room/${roomID}`, { state: { roomID } });
+        console.log("Room exists", exists, roomID, participants);
+        navigate(`/room/${roomID}`, { state: { roomID, participants } });
+        
       } else {
         // Room does not exist, display an error message or handle it as needed
         console.log("Room does not exist");
