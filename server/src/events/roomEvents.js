@@ -42,6 +42,8 @@ function handleRoomEvents(io, socket) {
     socket.on("room:getAllUsers", ({ id }) => {
         getAllUsers(id, socket);
     });
+
+    
 }
 
 module.exports = { handleRoomEvents };
