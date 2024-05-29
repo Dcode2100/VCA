@@ -20,23 +20,6 @@ const LobbyScreen = () => {
     [isCreatingRoom, room, socket]
   );
 
-  const handleRoomCreated = useCallback(
-    ({ roomID }) => {
-      setIsCreatingRoom(false); // Reset room creation flag
-      // Redirect to the newly created room page
-      navigate(`/room/${roomID}`);
-    },
-    [navigate]
-  );
-
-  const handleJoinRoom = useCallback(
-    ({ roomID }) => {
-      // Redirect to the room page upon successful room joining
-      navigate(`/room/${roomID}`);
-    },
-    [navigate]
-  );
-
   const handleCreateNewRoom = useCallback(() => {
     if (!isCreatingRoom) {
       setIsCreatingRoom(true); // Set room creation flag
@@ -45,27 +28,21 @@ const LobbyScreen = () => {
   }, [isCreatingRoom, socket]);
 
   useEffect(() => {
-    // Listen for room:created event after room creation
-    socket.on("room:created", handleRoomCreated);
-    // Listen for room:join:response event after joining a room
-    socket.on("room:join:response", ({ exists, roomID, participants }) => {
-      if (exists) {
-        // Room exists, navigate to the room
-        // navigate(`/room/${roomID}`);
-        console.log("Room exists", exists, roomID, participants);
-        navigate(`/room/${roomID}`, { state: { roomID, participants } });
-        
+    socket.on("room:join:response", ({ RoomExists, roomID, participants }) => {
+      if (RoomExists) {
+        // console.log("Room exists", RoomExists, roomID, participants);
+        navigate(`/room/${roomID}`, { state: { participants } });
       } else {
-        // Room does not exist, display an error message or handle it as needed
+        alert("Room does not exist");
         console.log("Room does not exist");
       }
     });
 
     return () => {
-      socket.off("room:created", handleRoomCreated);
+      socket.off("room:created");
       socket.off("room:join:response");
     };
-  }, [socket, handleRoomCreated, navigate]);
+  }, [socket, navigate]);
 
   return (
     <div>

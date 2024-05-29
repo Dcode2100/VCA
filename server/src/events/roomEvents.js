@@ -5,9 +5,9 @@ function handleRoomEvents(io, socket) {
     socket.on("room:create", () => {
         const roomID = createRoom(socket.id);
         socket.join(roomID);
-        socket.emit("room:created", { roomID });
+        console.log(roomID);
         socket.emit("room:join:response", {
-            exists: true,
+            RoomExists: true,
             roomID,
             participants: Array.from(rooms.get(roomID).participants)
         });
@@ -40,7 +40,9 @@ function handleRoomEvents(io, socket) {
     });
 
     socket.on("room:getAllUsers", ({ id }) => {
+        console.log("getAllUsers activated", id);
         getAllUsers(id, socket);
+        
     });
 
     
