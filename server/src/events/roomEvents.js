@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, getAllUsers } = require("../utils/socketUtils");
+const { createRoom, joinRoom, getAllUsers, exitRoom } = require("../utils/socketUtils");
 const { rooms } = require("../models/room"); // Import rooms from models
 
 function handleRoomEvents(io, socket) {
@@ -6,7 +6,7 @@ function handleRoomEvents(io, socket) {
         const roomID = createRoom(socket.id);
         socket.join(roomID);
         console.log(roomID);
-        socket.emit("room:join:response", {
+        socket.emit("room:created:response", {
             RoomExists: true,
             roomID,
             participants: Array.from(rooms.get(roomID).participants)
@@ -15,37 +15,46 @@ function handleRoomEvents(io, socket) {
         io.to(roomID).emit("user:joined", { id: socket.id, participants: [socket.id] });
     });
 
+    socket.on("room:getAllUsers", ({ clientRoomId }) => {
+        console.log("getAllUsers activated", clientRoomId, "socketId", socket.id);
+        getAllUsers(clientRoomId, socket);
+    });
+
     socket.on("room:join:request", (roomID) => {
+        console.log(roomID)
         if (rooms.has(roomID)) {
             joinRoom(roomID, socket.id);
             socket.join(roomID);
             socket.emit("room:join:response", {
-                exists: true,
+                RoomExists: true,
                 roomID,
                 participants: Array.from(rooms.get(roomID).participants)
             });
 
-            io.to(roomID).emit("user:joined", {
-                id: socket.id,
-                participants: Array.from(rooms.get(roomID).participants)
-            });
+            io.to(roomID).emit("user:joined"); 
         } else {
             socket.emit("room:join:response", { exists: false, roomID, participants: [] });
-
-            io.to(roomID).emit("user:joined", {
-                id: socket.id,
-                participants: Array.from(rooms.get(roomID).participants)
-            }); 
         }
     });
 
-    socket.on("room:getAllUsers", ({ id }) => {
-        console.log("getAllUsers activated", id);
-        getAllUsers(id, socket);
-        
-    });
+    socket.on("room:exit:request", ({ roomId: roomId, socketId: socketId }) => {
 
-    
+        if (rooms.has(roomId)) {
+
+            exitRoom(roomId, socketId); // This will remove the user from the room 
+
+            io.emit("user:left",() => {});
+
+            socket.emit("room:exit:response", { success: true });
+
+        } else {
+            socket.emit("room:exit:response", { success: false, message: "Room does not exist" });
+        }
+    })
+
+
+
+
 }
 
 module.exports = { handleRoomEvents };

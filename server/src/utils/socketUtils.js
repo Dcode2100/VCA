@@ -12,13 +12,32 @@ function joinRoom(roomID, socketID) {
     }
 }
 
-function getAllUsers(roomID, socket) {
-    if (rooms.has(roomID)) {
-        const participants = Array.from(rooms.get(roomID).participants);
-        socket.emit("room:getAllUsers:response", { roomId: roomID, participants });
+function getAllUsers(clientRoomId, socket) {
+    if (rooms.has(clientRoomId)) {
+        const participants = Array.from(rooms.get(clientRoomId).participants);
+        socket.emit("room:getAllUsers:response", { roomId: clientRoomId, participants });
     } else {
-        console.log(`Room ${roomID} does not exist.`);
+        console.log(`Room ${clientRoomId} does not exist.`);
+    }
+}
+function exitRoom(roomID, socketId) {
+    const room = rooms.get(roomID);
+
+    if (room && room.participants instanceof Set) {
+        room.participants.delete(socketId);
+
+        if (room.participants.size === 0) {
+            rooms.delete(roomID); // Remove room if empty
+            console.log(`Room ${roomID} deleted as it is empty.`);
+        } else {
+            rooms.set(roomID, room); // Update room with remaining participants
+            // console.log(`Room ${roomID} updated with remaining participants:`, room.participants);
+        }
+
+    } else {
+        console.error(`Room not found or participants is not a Set for room ID: ${roomID}`);
     }
 }
 
-module.exports = { createRoom, joinRoom, getAllUsers };
+
+module.exports = { createRoom, joinRoom, getAllUsers, exitRoom };

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSocket } from "../context/SocketProvider";
+import { SocketProvider, useSocket } from "../context/SocketProvider";
+import { Socket } from "socket.io-client";
 
 const LobbyScreen = () => {
   const [room, setRoom] = useState("");
@@ -9,11 +10,10 @@ const LobbyScreen = () => {
   const socket = useSocket();
   const navigate = useNavigate();
 
-  const handleSubmitForm = useCallback(
+  const handleJoinRoom = useCallback(
     (e) => {
       e.preventDefault();
       if (!isCreatingRoom && room.trim() !== "") {
-        // Emit a request to join the room
         socket.emit("room:join:request", room.trim());
       }
     },
@@ -22,19 +22,34 @@ const LobbyScreen = () => {
 
   const handleCreateNewRoom = useCallback(() => {
     if (!isCreatingRoom) {
-      setIsCreatingRoom(true); // Set room creation flag
+      setIsCreatingRoom(true);
       socket.emit("room:create");
     }
   }, [isCreatingRoom, socket]);
 
   useEffect(() => {
+    console.log(isCreatingRoom);
+    socket.on(
+      "room:created:response",
+      ({ RoomExists, roomID, participants }) => {
+        if (RoomExists) {
+          setIsCreatingRoom(false);
+          // console.log("lobbyConsole", RoomExists, roomID, participants);
+          navigate(`/room/${roomID}`, {
+            state: { roomIdLobby: roomID },
+          });
+        } else {
+          alert("Room does not exist");
+        }
+      }
+    );
+
     socket.on("room:join:response", ({ RoomExists, roomID, participants }) => {
+      console.log(RoomExists);
       if (RoomExists) {
-        // console.log("Room exists", RoomExists, roomID, participants);
-        navigate(`/room/${roomID}`, { state: { participants } });
+        navigate(`/room/${roomID}`, { state: { roomIdLobby: roomID } });
       } else {
         alert("Room does not exist");
-        console.log("Room does not exist");
       }
     });
 
@@ -47,7 +62,7 @@ const LobbyScreen = () => {
   return (
     <div>
       <h1>Lobby</h1>
-      <form onSubmit={handleSubmitForm}>
+      <form onSubmit={handleJoinRoom}>
         <label htmlFor="room">Enter Room Number:</label>
         <input
           type="text"
