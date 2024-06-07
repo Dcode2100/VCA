@@ -1,41 +1,42 @@
-class PeerService {
-  constructor() {
-    if (!this.peer) {
-      this.peer = new RTCPeerConnection({
-        iceServers: [
-          {
-            urls: [
-              "stun:stun.l.google.com:19302",
-              "stun:global.stun.twilio.com:3478",
-            ],
-          },
-        ],
-      });
-    }
-  }
+let peer;
 
-  async getAnswer(offer) {
-    if (this.peer) {
-      await this.peer.setRemoteDescription(offer);
-      const ans = await this.peer.createAnswer();
-      await this.peer.setLocalDescription(new RTCSessionDescription(ans));
-      return ans;
-    }
+const createPeerConnection = () => {
+  if (!peer) {
+    peer = new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: [
+            "stun:stun.l.google.com:19302",
+            "stun:global.stun.twilio.com:3478",
+          ],
+        },
+      ],
+    });
   }
+  return peer;
+};
 
-  async setLocalDescription(ans) {
-    if (this.peer) {
-      await this.peer.setRemoteDescription(new RTCSessionDescription(ans));
-    }
+const createOffer = async () => {
+  try {
+    debugger;
+    const peer = createPeerConnection(); // This is a new peer connection
+    const offer = await peer.createOffer(); // This is a new offer
+    // i dont want to set the local description here 
+    return offer;
+  } catch (error) {
+    console.error("Error creating an offer", error);
+    throw error;
   }
+};
 
-  async getOffer() {
-    if (this.peer) {
-      const offer = await this.peer.createOffer();
-      await this.peer.setLocalDescription(new RTCSessionDescription(offer));
-      return offer;
-    }
+const setLocalDescription = async (offer) => {
+  try {
+    const peer = createPeerConnection();
+    await peer.setLocalDescription(new RTCSessionDescription(offer));
+  } catch (error) {
+    console.error("Error setting local description", error);
+    throw error;
   }
-}
+};
 
-export default new PeerService();
+export { createOffer, setLocalDescription };

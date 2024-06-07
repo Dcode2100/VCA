@@ -2,14 +2,17 @@ const { createRoom, joinRoom, getAllUsers, exitRoom } = require("../utils/socket
 const { rooms } = require("../models/room"); // Import rooms from models
 
 function handleRoomEvents(io, socket) {
-    socket.on("room:create", () => {
-        const roomID = createRoom(socket.id);
+    socket.on("room:create", async ({ offer }) => {
+        const roomID = await createRoom(socket.id, offer);
         socket.join(roomID);
         console.log(roomID);
+        console.log("rooms", rooms);
+        console.log("offer", offer);
         socket.emit("room:created:response", {
             RoomExists: true,
             roomID,
-            participants: Array.from(rooms.get(roomID).participants)
+            participants: Array.from(rooms.get(roomID).participants),
+            offer
         });
 
         io.to(roomID).emit("user:joined", { id: socket.id, participants: [socket.id] });

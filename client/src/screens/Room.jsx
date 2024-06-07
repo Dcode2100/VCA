@@ -4,21 +4,32 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 const RoomPage = () => {
   const location = useLocation();
-  const { roomIdLobby } = location.state || {};
+  const { roomIdLobby, OwnerOffer } = location.state || {};
   const [roomId, setRoomId] = useState(null);
   const socket = useSocket();
   const navigate = useNavigate();
   const [roomParticipants, setroomParticipants] = useState([]);
 
-    const handleExitRoom = () => {
-    socket.emit("room:exit:request", 
-    {
-        roomId: roomId,
-        socketId: socket.id
+  const handleExitRoom = () => {
+    socket.emit("room:exit:request", {
+      roomId: roomId,
+      socketId: socket.id,
     });
-};
+  };
 
   useEffect(() => {
+    function initializeFirstTimeRoomCreation() {
+      // ! 0. handle the OwnerOffer from the lobby
+      if (OwnerOffer) {
+        debugger;
+        console.log(
+          "OwnerOffer local description set successfully",
+          OwnerOffer
+        );
+      }
+    }
+
+    initializeFirstTimeRoomCreation();
     // ! 1. Get all the users in the room
     socket.emit("room:getAllUsers", { clientRoomId: roomIdLobby });
     socket.on("room:getAllUsers:response", ({ roomId, participants }) => {
@@ -43,15 +54,16 @@ const RoomPage = () => {
 
     // ! 4 Handle user Left room
     socket.on("user:left", () => {
-        socket.emit("room:getAllUsers", { clientRoomId: roomIdLobby });
+      socket.emit("room:getAllUsers", { clientRoomId: roomIdLobby });
     });
 
+    //
     return () => {
       socket.off("room:getAllUsers:response");
       socket.off("user:joined");
       socket.off("room:exit:response");
     };
-  }, [socket, roomId]);
+  }, [socket, roomId, OwnerOffer]);
 
   return (
     <div>

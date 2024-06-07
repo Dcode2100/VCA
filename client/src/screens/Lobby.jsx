@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SocketProvider, useSocket } from "../context/SocketProvider";
-import { Socket } from "socket.io-client";
+import { createOffer } from "../service/peer";
 
 const LobbyScreen = () => {
   const [room, setRoom] = useState("");
@@ -23,7 +23,11 @@ const LobbyScreen = () => {
   const handleCreateNewRoom = useCallback(() => {
     if (!isCreatingRoom) {
       setIsCreatingRoom(true);
-      socket.emit("room:create");
+      const offer = createOffer();
+      offer.then((offer) => {
+        console.log("offer", offer);
+        socket.emit("room:create", { offer });
+      });
     }
   }, [isCreatingRoom, socket]);
 
@@ -31,12 +35,12 @@ const LobbyScreen = () => {
     console.log(isCreatingRoom);
     socket.on(
       "room:created:response",
-      ({ RoomExists, roomID, participants }) => {
+      ({ RoomExists, roomID, participants, offer }) => {
         if (RoomExists) {
           setIsCreatingRoom(false);
           // console.log("lobbyConsole", RoomExists, roomID, participants);
           navigate(`/room/${roomID}`, {
-            state: { roomIdLobby: roomID },
+            state: { roomIdLobby: roomID, OwnerOffer: offer },
           });
         } else {
           alert("Room does not exist");
