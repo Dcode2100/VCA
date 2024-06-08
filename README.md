@@ -4,142 +4,73 @@ A Video confrencing web app
 
 mysql://root:vcspassword@34.82.42.68:3306/vcs
 
+direct p2p conection using webrtc and simple console
 
-signalling server -> const express = require("express")
-const http = require('http');
-const { Server } = require('socket.io');
+1. In first tab
+const lc = new RTCPeerConnection()
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-  },
-})
+lc.onicecandidate = e => console.log("new ice candidate " + JSON.stringify(lc.localDescription))
 
-const roomUsers = new Map()
-
-io.on('connection', (socket) => {
-  console.log(`A new user connected with socket ID: ${socket.id}`)
-
-  socket.on('offer', (offer, targetSocketId) => {
-    console.log(
-      `Offer received on server from ${socket.id} to be able to send to ${targetSocketId}`,
-      offer
-    )
-
-    io.to(targetSocketId).emit('offer', offer, socket.id)
-  })
-
-  socket.on('answer', (answer, targetSocketId) => {
-    console.log(a
-      `Answer received on server to be able to send to ${targetSocketId}`,
-      answer
-    )
-
-    io.to(targetSocketId).emit('answer', answer, socket.id)
-  })
-
-  socket.on('ice-candidate', (iceCandidate, targetSocketId) => {
-    console.log(`Ice candidate received on server to be able to send to ${targetSocketId} `, iceCandidate)
-
-    io.to(targetSocketId).emit('ice-candidate', iceCandidate, socket.id)
-  })
-
-  socket.on('create-meet-link', () => {
-    console.log('Create meet link received on server')
-
-    // TODO: replace this with uuid library to get a unique meet link.
-    const meetLink = `${socket.id}-${new Date().getTime()}`
-
-    io.to(socket.id).emit('meet-link-created', meetLink)
-  })
-
-  socket.on('join-meet-link', (meetLink) => {
-    console.log('Join meet link received on server: ', meetLink)
-
-    const maxUsersPerRoom = process.env.MAX_USERS_PER_ROOM || 3
-
-    const users = roomUsers.get(meetLink) || []
-
-    if (users.length >= maxUsersPerRoom) {
-      io.to(socket.id).emit('room-full', meetLink)
-      return
-    }
-
-    socket.join(meetLink)
-
-    users.push(socket.id)
-    roomUsers.set(meetLink, [...new Set(users)])
-
-    socket.to(meetLink).emit('user-joined', socket.id)
-  })
-
-  socket.on('disconnect', () => {
-    roomUsers.forEach((users, meetLink) => {
-      const index = users.indexOf(socket.id)
-
-      if (index > -1) {
-        users.splice(index, 1)
-        roomUsers.set(meetLink, users)
-        socket.to(meetLink).emit('user-left', socket.id)
-      }
-    })
-
-    console.log('After leave', roomUsers)
-  })
-})
-
-const port = process.env.PORT || 8000
-
-server.listen(5000, () => {
-  console.log('Server is running on http://localhost:5000');
-});
+lc.createOffer().then(o=> lc.setLocalDescription(o)).then(a=> console.log("set succesffully"))
 
 
 
+webrtc-internals - >
+
+createOffer
+createOfferOnSuccess (type: "offer", 1 sections)
+setLocalDescription (type: "offer", 1 sections)
+setLocalDescriptionOnSuccess
+signalingstatechange
+
+
+2. In second tab
+copy the offer from first tab and paste it in second tab
+
+const offer = {"type":"offer","sdp":"v=0\r\no=- 9071671299354852901 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=extmap-allow-mixed\r\na=msid-semantic: WMS\r\n"}
+
+const rc = new RTCPeerConnection()
+
+rc.onicecandidate = e => console.log("new ice candidate " + JSON.stringify(rc.localDescription))
+
+rc.setRemoteDescription(offer).then(a => console.log("offer set"))
+
+rc.createAnswer().then(a=> rc.setLocalDescription(a).then(a => console.log("created answer"))
+
+console.log(JSON.stringify(rc.localDescription))
+
+ {"type":"answer","sdp":"v=0\r\no=- 7819600083561256494 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=extmap-allow-mixed\r\na=msid-semantic: WMS\r\n"}
 
 
 
-second suggestion -> 
+webrtc-internals - >
 
-// server.js
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
+Time	Event
+08/06/2024, 08:38:27	
+setRemoteDescription (type: "offer", 1 sections)
+08/06/2024, 08:38:27	setRemoteDescriptionOnSuccess
+08/06/2024, 08:38:27	
+signalingstatechange
+08/06/2024, 08:39:30	
+createAnswer
+08/06/2024, 08:39:30	
+createAnswerOnSuccess (type: "answer", 1 sections)
+08/06/2024, 08:39:30	
+setLocalDescription (type: "answer", 1 sections)
+08/06/2024, 08:39:30	setLocalDescriptionOnSuccess
+08/06/2024, 08:39:30	
+signalingstatechange
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-  },
-});
+3. In first tab
+copy the answer from second tab and paste it in first tab
 
-io.on('connection', (socket) => {
-  console.log(`User connected with socket ID: ${socket.id}`);
 
-  socket.on('offer', (offer, targetSocketId) => {
-    console.log(`Offer received from ${socket.id} for ${targetSocketId}`);
-    io.to(targetSocketId).emit('offer', offer, socket.id);
-  });
+webrtc-internals -> 
 
-  socket.on('answer', (answer, targetSocketId) => {
-    console.log(`Answer received from ${socket.id} for ${targetSocketId}`);
-    io.to(targetSocketId).emit('answer', answer, socket.id);
-  });
+08/06/2024, 08:43:27	
+setRemoteDescription (type: "answer", 1 sections)
+08/06/2024, 08:43:27	setRemoteDescriptionOnSuccess
+08/06/2024, 08:43:27	
+signalingstatechange
 
-  socket.on('ice-candidate', (iceCandidate, targetSocketId) => {
-    console.log(`ICE candidate received from ${socket.id} for ${targetSocketId}`);
-    io.to(targetSocketId).emit('ice-candidate', iceCandidate, socket.id);
-  });
 
-  socket.on('disconnect', () => {
-    console.log(`User disconnected with socket ID: ${socket.id}`);
-  });
-});
-
-const port = process.env.PORT || 5000;
-server.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-});

@@ -11,7 +11,6 @@ function handleRoomEvents(io, socket) {
         socket.emit("room:created:response", {
             RoomExists: true,
             roomID,
-            participants: Array.from(rooms.get(roomID).participants),
             offer
         });
 
@@ -23,18 +22,18 @@ function handleRoomEvents(io, socket) {
         getAllUsers(clientRoomId, socket);
     });
 
-    socket.on("room:join:request", (roomID) => {
-        console.log(roomID)
+    socket.on("room:join:request", (roomID) => {        
         if (rooms.has(roomID)) {
             joinRoom(roomID, socket.id);
             socket.join(roomID);
+            const offer = rooms.get(roomID).offer;
             socket.emit("room:join:response", {
                 RoomExists: true,
                 roomID,
-                participants: Array.from(rooms.get(roomID).participants)
+                offer,
             });
-
             io.to(roomID).emit("user:joined"); 
+            io.to(socket.id).emit('room:join:offer', { offer });
         } else {
             socket.emit("room:join:response", { exists: false, roomID, participants: [] });
         }
@@ -55,6 +54,24 @@ function handleRoomEvents(io, socket) {
         }
     })
 
+    socket.on("participant:sendAnswer", ({ roomID, answer }) => {
+        if (rooms.has(roomID)) {
+            const room = rooms.get(roomID);
+            const roomCreatorId = Array.from(room.participants)[0];
+            io.to(roomCreatorId).emit("participant:answer", { participantId: socket.id, answer });
+        }
+    });
+
+    // Handle setting the remote description on the room creator side
+    socket.on("participant:answer", async ({ participantId, answer }) => {
+        try {
+            const peer = createPeerConnection(participantId); // Ensure you have a peer connection for the participant
+            await peer.setRemoteDescription(new RTCSessionDescription(answer));
+            console.log(`Set remote description for participant ${participantId}`);
+        } catch (error) {
+            console.error("Error setting remote description", error);
+        }
+    });
 
 
 
