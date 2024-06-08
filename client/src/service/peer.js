@@ -40,6 +40,7 @@ const setLocalDescription = async (id, offer) => {
 
 const setRemoteDescription = async (id, answer) => {
   try {
+    debugger;
     const peer = createPeerConnection(id);
     await peer.setRemoteDescription(new RTCSessionDescription(answer));
   } catch (error) {

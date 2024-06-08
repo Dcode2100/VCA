@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useState } from "react";
 import { useSocket } from "../context/SocketProvider";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-
+import { createPeerConnection } from "../service/peer";
 const RoomPage = () => {
   const location = useLocation();
   const { roomIdLobby, OwnerOffer } = location.state || {};
@@ -57,11 +57,25 @@ const RoomPage = () => {
       socket.emit("room:getAllUsers", { clientRoomId: roomIdLobby });
     });
 
-    //
+    // ! 5. handle the participant sendanswer event here
+    socket.on("participant:answer", async ({ participantId, answer }) => {
+      try {
+        debugger;
+        const peerConnection = createPeerConnection(socket.id);
+        await peerConnection.setRemoteDescription(
+          new RTCSessionDescription(answer)
+        );
+      } catch (error) {
+        console.error("Error setting remote description", error);
+      }
+    });
+
     return () => {
       socket.off("room:getAllUsers:response");
       socket.off("user:joined");
       socket.off("room:exit:response");
+      socket.off("user:left");
+      socket.off("participant:answer");
     };
   }, [socket, roomId, OwnerOffer]);
 

@@ -41,6 +41,7 @@ const LobbyScreen = () => {
     socket.on("room:created:response", ({ RoomExists, roomID, offer }) => {
       if (RoomExists) {
         setIsCreatingRoom(false);
+        setLocalDescription(socket.id, offer);
         navigate(`/room/${roomID}`, {
           state: { roomIdLobby: roomID, OwnerOffer: offer },
         });
@@ -54,6 +55,7 @@ const LobbyScreen = () => {
       debugger;
       if (RoomExists) {
         // Listen for the offer from the room creator
+        debugger;
         socket.on("room:join:offer", async ({ offer }) => {
           const peerId = socket.id;
           const peerConnection = createPeerConnection(peerId);
