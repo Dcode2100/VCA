@@ -1,8 +1,8 @@
 const { rooms, generateRoomID } = require("../models/room");
 
-function createRoom(socketID) {
+function createRoom(socketID, offer) {
     const roomID = generateRoomID();
-    rooms.set(roomID, { participants: new Set([socketID]) });
+    rooms.set(roomID, { participants: new Set([socketID]), offer });
     return roomID;
 }
 

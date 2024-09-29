@@ -1,7 +1,12 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { SocketProvider, useSocket } from "../context/SocketProvider";
-import { Socket } from "socket.io-client";
+import { useSocket } from "../context/SocketProvider";
+import {
+  createOffer,
+  createPeerConnection,
+  setRemoteDescription,
+  setLocalDescription,
+} from "../service/peer";
 
 const LobbyScreen = () => {
   const [room, setRoom] = useState("");
@@ -23,39 +28,56 @@ const LobbyScreen = () => {
   const handleCreateNewRoom = useCallback(() => {
     if (!isCreatingRoom) {
       setIsCreatingRoom(true);
-      socket.emit("room:create");
+      createOffer(socket.id).then((offer) => {
+        console.log("offer", offer);
+        socket.emit("room:create", { offer });
+      });
     }
   }, [isCreatingRoom, socket]);
 
   useEffect(() => {
     console.log(isCreatingRoom);
-    socket.on(
-      "room:created:response",
-      ({ RoomExists, roomID, participants }) => {
-        if (RoomExists) {
-          setIsCreatingRoom(false);
-          // console.log("lobbyConsole", RoomExists, roomID, participants);
-          navigate(`/room/${roomID}`, {
-            state: { roomIdLobby: roomID },
-          });
-        } else {
-          alert("Room does not exist");
-        }
-      }
-    );
 
-    socket.on("room:join:response", ({ RoomExists, roomID, participants }) => {
-      console.log(RoomExists);
+    socket.on("room:created:response", ({ RoomExists, roomID, offer }) => {
       if (RoomExists) {
-        navigate(`/room/${roomID}`, { state: { roomIdLobby: roomID } });
+        setIsCreatingRoom(false);
+        setLocalDescription(socket.id, offer);
+        navigate(`/room/${roomID}`, {
+          state: { roomIdLobby: roomID, OwnerOffer: offer },
+        });
+      } else {
+        alert("Room does not exist");
+      }
+    });
+
+    socket.on("room:join:response", ({ RoomExists, roomID, offer }) => {
+      console.log(RoomExists);
+      debugger;
+      if (RoomExists) {
+        // Listen for the offer from the room creator
+        debugger;
+        socket.on("room:join:offer", async ({ offer }) => {
+          const peerId = socket.id;
+          const peerConnection = createPeerConnection(peerId);
+          await setRemoteDescription(peerId, offer);
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          debugger;
+          socket.emit("participant:sendAnswer", { roomID: roomID, answer });
+        });
+
+        navigate(`/room/${roomID}`, {
+          state: { roomIdLobby: roomID, OwnerOffer: offer },
+        });
       } else {
         alert("Room does not exist");
       }
     });
 
     return () => {
-      socket.off("room:created");
+      socket.off("room:created:response");
       socket.off("room:join:response");
+      socket.off("room:join:offer");
     };
   }, [socket, navigate]);
 

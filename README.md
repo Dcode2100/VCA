@@ -5,141 +5,56 @@ A Video confrencing web app
 mysql://root:vcspassword@34.82.42.68:3306/vcs
 
 
-signalling server -> const express = require("express")
-const http = require('http');
-const { Server } = require('socket.io');
+***************************************************************
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-  },
-})
+direct p2p conection using webrtc and chrome chat app
 
-const roomUsers = new Map()
+1. In first tab
 
-io.on('connection', (socket) => {
-  console.log(`A new user connected with socket ID: ${socket.id}`)
+const lc = new RTCPeerConnection()
 
-  socket.on('offer', (offer, targetSocketId) => {
-    console.log(
-      `Offer received on server from ${socket.id} to be able to send to ${targetSocketId}`,
-      offer
-    )
+const dc = lc.createDataChannel("Channel");
 
-    io.to(targetSocketId).emit('offer', offer, socket.id)
-  })
+dc.onmessage = e => console.log("just got a message " + e.data);
 
-  socket.on('answer', (answer, targetSocketId) => {
-    console.log(a
-      `Answer received on server to be able to send to ${targetSocketId}`,
-      answer
-    )
+dc.onopen = e => console.log("connection opened!")
 
-    io.to(targetSocketId).emit('answer', answer, socket.id)
-  })
+lc.onicecandidate = e => console.log("new ice candidate " + JSON.stringify(lc.localDescription))
 
-  socket.on('ice-candidate', (iceCandidate, targetSocketId) => {
-    console.log(`Ice candidate received on server to be able to send to ${targetSocketId} `, iceCandidate)
+lc.createOffer().then(o => lc.setLocalDescription(o)).then(a => console.log("created answer"))
 
-    io.to(targetSocketId).emit('ice-candidate', iceCandidate, socket.id)
-  })
 
-  socket.on('create-meet-link', () => {
-    console.log('Create meet link received on server')
+2. In second tab -> 
 
-    // TODO: replace this with uuid library to get a unique meet link.
-    const meetLink = `${socket.id}-${new Date().getTime()}`
+copy the offer from first tab and paste it in second tab
 
-    io.to(socket.id).emit('meet-link-created', meetLink)
-  })
+const rc = new RTCPeerConnection();
 
-  socket.on('join-meet-link', (meetLink) => {
-    console.log('Join meet link received on server: ', meetLink)
+rc.onicecandidate = e => console.log("New Ice candidate! reprinting SDP" + JSON.stringify(rc.localDescription))
 
-    const maxUsersPerRoom = process.env.MAX_USERS_PER_ROOM || 3
+rc.ondatachannel = e => {
+    rc.dc = e.channel;
+    rc.dc.onmessage = e => console.log("new message from client" + e.data)
+    rc.dc.oneopen = e => console.log("connection opened !!!!")
+}
 
-    const users = roomUsers.get(meetLink) || []
+rc.setRemoteDescription(offer).then(e => console.log("offer set"))
 
-    if (users.length >= maxUsersPerRoom) {
-      io.to(socket.id).emit('room-full', meetLink)
-      return
-    }
+rc.createAnswer().then(a=> rc.setLocalDescription(a)).then(a => console.log("created answer"))
 
-    socket.join(meetLink)
 
-    users.push(socket.id)
-    roomUsers.set(meetLink, [...new Set(users)])
 
-    socket.to(meetLink).emit('user-joined', socket.id)
-  })
+3. In first tab
+copy the answer from second tab and paste it in first tab
 
-  socket.on('disconnect', () => {
-    roomUsers.forEach((users, meetLink) => {
-      const index = users.indexOf(socket.id)
+lc.setRemoteDescription(answer)
 
-      if (index > -1) {
-        users.splice(index, 1)
-        roomUsers.set(meetLink, users)
-        socket.to(meetLink).emit('user-left', socket.id)
-      }
-    })
+dc.send("message from dc channel publisher")
 
-    console.log('After leave', roomUsers)
-  })
-})
+4. In second tab
 
-const port = process.env.PORT || 8000
-
-server.listen(5000, () => {
-  console.log('Server is running on http://localhost:5000');
-});
+rc.dc.send('message from dc channel subscriber')
 
 
 
 
-
-
-second suggestion -> 
-
-// server.js
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-  },
-});
-
-io.on('connection', (socket) => {
-  console.log(`User connected with socket ID: ${socket.id}`);
-
-  socket.on('offer', (offer, targetSocketId) => {
-    console.log(`Offer received from ${socket.id} for ${targetSocketId}`);
-    io.to(targetSocketId).emit('offer', offer, socket.id);
-  });
-
-  socket.on('answer', (answer, targetSocketId) => {
-    console.log(`Answer received from ${socket.id} for ${targetSocketId}`);
-    io.to(targetSocketId).emit('answer', answer, socket.id);
-  });
-
-  socket.on('ice-candidate', (iceCandidate, targetSocketId) => {
-    console.log(`ICE candidate received from ${socket.id} for ${targetSocketId}`);
-    io.to(targetSocketId).emit('ice-candidate', iceCandidate, socket.id);
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`User disconnected with socket ID: ${socket.id}`);
-  });
-});
-
-const port = process.env.PORT || 5000;
-server.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-});
