@@ -27,12 +27,14 @@ function handleRoomEvents(io, socket) {
             joinRoom(roomID, socket.id);
             socket.join(roomID);
             const offer = rooms.get(roomID).offer;
+            const participants = Array.from(rooms.get(roomID).participants);
             socket.emit("room:join:response", {
                 RoomExists: true,
                 roomID,
                 offer,
             });
-            io.to(roomID).emit("user:joined"); 
+            socket.emit("room:participants", { roomId: roomID, participants });
+            io.to(roomID).emit("user:joined", { userId: socket.id }); 
             io.to(socket.id).emit('room:join:offer', { offer });
         } else {
             socket.emit("room:join:response", { exists: false, roomID, participants: [] });
@@ -73,7 +75,17 @@ function handleRoomEvents(io, socket) {
         }
     });
 
+    socket.on("webrtc:offer", ({ to, offer }) => {
+        io.to(to).emit("webrtc:offer", { from: socket.id, offer });
+    });
 
+    socket.on("webrtc:answer", ({ to, answer }) => {
+        io.to(to).emit("webrtc:answer", { from: socket.id, answer });
+    });
+
+    socket.on("webrtc:ice-candidate", ({ to, candidate }) => {
+        io.to(to).emit("webrtc:ice-candidate", { from: socket.id, candidate });
+    });
 
 }
 

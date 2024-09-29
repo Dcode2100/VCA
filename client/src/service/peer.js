@@ -1,6 +1,6 @@
 const peerConnections = {};
 
-const createPeerConnection = (id) => {
+const createPeerConnection = (id, socket) => {
   if (!peerConnections[id]) {
     peerConnections[id] = new RTCPeerConnection({
       iceServers: [
@@ -12,6 +12,15 @@ const createPeerConnection = (id) => {
         },
       ],
     });
+
+    peerConnections[id].onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("webrtc:ice-candidate", {
+          to: id,
+          candidate: event.candidate,
+        });
+      }
+    };
   }
   return peerConnections[id];
 };
@@ -20,7 +29,7 @@ const createOffer = async (id) => {
   try {
     const peer = createPeerConnection(id);
     const offer = await peer.createOffer();
-    // No need to set local description here as per your requirement
+    await peer.setLocalDescription(offer);
     return offer;
   } catch (error) {
     console.error("Error creating an offer", error);
@@ -40,7 +49,6 @@ const setLocalDescription = async (id, offer) => {
 
 const setRemoteDescription = async (id, answer) => {
   try {
-    debugger;
     const peer = createPeerConnection(id);
     await peer.setRemoteDescription(new RTCSessionDescription(answer));
   } catch (error) {
@@ -54,4 +62,3 @@ const getPeerConnection = (id) => {
 };
 
 export { createOffer, setLocalDescription, setRemoteDescription, getPeerConnection, createPeerConnection };
-  
