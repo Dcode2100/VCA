@@ -9,8 +9,19 @@
         "<node_internals>/**"
       ],
       "type": "node"
+    },
+    {
+      "name": "backend go server debugger",
+      "program": "${workspaceFolder}/GoLangMigration/main.go",
+      "request": "launch",
+      "type": "go",
+      "mode": "auto",
+      "cwd": "${workspaceFolder}/GoLangMigration",
+      "env": {},
+      "args": []
     }
   ]
+
 }
 
 
